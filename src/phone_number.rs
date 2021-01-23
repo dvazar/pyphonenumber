@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use pyo3::prelude::*;
-
 use phonenumber::{Mode, PhoneNumber, format, is_valid};
+use pyo3::class::basic::CompareOp;
+use pyo3::exceptions::PyTypeError;
+use pyo3::prelude::*;
+use pyo3::PyObjectProtocol;
 
 
 const E164: &str = "E164";
@@ -76,25 +78,80 @@ impl PyPhoneNumberFormat {
 /// Class representing international telephone numbers.
 #[pyclass(name="PhoneNumber", module="phonenumber")]
 pub struct PyPhoneNumber {
-    phone_number: PhoneNumber,
+    wrap: PhoneNumber,
+}
+
+#[pyproto]
+impl PyObjectProtocol for PyPhoneNumber {
+
+    fn __str__(&self) -> PyResult<String> {
+        let mut doc = format!(
+            "Country Code: {} National Number: {}",
+            String::from(self.wrap.code().value().to_string()),
+            self.wrap.national().value().to_string(),
+        );
+        if let Some(ext) = self.wrap.extension() {
+            doc = format!("{} Extension: {}", doc, ext);
+        }
+        if let Some(carr) = self.wrap.carrier() {
+            doc = format!("{} Carrier: {}", doc, carr);
+        }
+        Ok(doc)
+    }
+
+    fn __repr__(&self) -> PyResult<String> {
+        let mut doc = format!(
+            "PhoneNumber(country_code={}, national_number={}",
+            String::from(self.wrap.code().value().to_string()),
+            self.wrap.national().value().to_string(),
+        );
+        if let Some(ext) = self.wrap.extension() {
+            doc = format!("{}, extension='{}'", doc, ext);
+        }
+        if let Some(carr) = self.wrap.carrier() {
+            doc = format!("{}, carrier='{}'", doc, carr);
+        }
+        doc = format!("{})", doc);
+        Ok(doc)
+    }
+
+    fn __richcmp__(&self, other: Py<PyPhoneNumber>, op: CompareOp) -> PyResult<bool> {
+
+        let pyerr = |op| {
+            PyTypeError::new_err(format!(
+                "'{}' not supported between instances of '{type}' and '{type}'",
+                op, type="PhoneNumber",
+            ))
+        };
+
+        Python::with_gil(|py| match op {
+            CompareOp::Eq => Ok(self.wrap == other.borrow(py).wrap),
+            CompareOp::Ne => Ok(self.wrap != other.borrow(py).wrap),
+            CompareOp::Lt => Err(pyerr("<")),
+            CompareOp::Gt => Err(pyerr(">")),
+            CompareOp::Le => Err(pyerr("<=")),
+            CompareOp::Ge => Err(pyerr(">=")),
+        })
+    }
+
 }
 
 impl PyPhoneNumber {
 
     pub fn new(phone_number: PhoneNumber) -> Self {
-        PyPhoneNumber { phone_number }
+        PyPhoneNumber { wrap: phone_number }
     }
 
     pub fn is_valid(&self) -> bool {
-        is_valid(&self.phone_number)
+        is_valid(&self.wrap)
     }
 
     pub fn format(&self, num_format: &str) -> String {
 
         match PyPhoneNumberFormat::get_mode(num_format) {
-            None => format!("{}", &self.phone_number),
+            None => format!("{}", &self.wrap),
             Some(mode) => {
-                format(&self.phone_number).mode(mode).to_string()
+                format(&self.wrap).mode(mode).to_string()
             }
         }
 
