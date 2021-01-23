@@ -124,9 +124,13 @@ impl PyObjectProtocol for PyPhoneNumber {
             ))
         };
 
+        let eq = |oth: &PyPhoneNumber| {
+            self.format(E164) == oth.format(E164)
+        };
+
         Python::with_gil(|py| match op {
-            CompareOp::Eq => Ok(self.wrap == other.borrow(py).wrap),
-            CompareOp::Ne => Ok(self.wrap != other.borrow(py).wrap),
+            CompareOp::Eq => Ok(eq(&other.borrow(py))),
+            CompareOp::Ne => Ok(!eq(&other.borrow(py))),
             CompareOp::Lt => Err(pyerr("<")),
             CompareOp::Gt => Err(pyerr(">")),
             CompareOp::Le => Err(pyerr("<=")),
