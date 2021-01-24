@@ -1,11 +1,16 @@
 [package]
 name = "pyphonenumber"
 version = "0.1.0"
-authors = ["adv"]
+description = "Fast library with low memory consumption to analyze, format and check international phone numbers."
+authors = ["Dmitrii Azarenko <advfet@gmail.com>"]
 edition = "2018"
+license = "Apache-2.0"
+repository = "https://github.com/dvazar/pyphonenumber"
+readme = "README.md"
+keywords = ["pyphonenumber", "phone", "number", "parser", "formatter", "validator"]
 
 [lib]
-name = "pyphonenumber"
+name = "phonenumber"
 crate-type = ["cdylib"]
 
 [dependencies]
