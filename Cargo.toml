@@ -14,8 +14,8 @@ name = "phonenumber"
 crate-type = ["cdylib"]
 
 [dependencies]
-phonenumber = "0.3.1+8.12.9"
+phonenumber = { git ="https://github.com/rustonaut/rust-phonenumber.git", branch = "master" }
 
 [dependencies.pyo3]
-version = "0.13.1"
+version = "0.13.2"
 features = ["extension-module"]
